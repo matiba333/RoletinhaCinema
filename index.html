@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roleta de Cinema - Diretores e Filmes</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0b0b0e;
+            color: #f4f4f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #e50914;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(229, 9, 20, 0.4);
+            margin-bottom: 5px;
+        }
+
+        p.subtitle {
+            color: #a0a0ab;
+            font-size: 1rem;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        /* Container da Roleta */
+        .wheel-container {
+            position: relative;
+            width: 360px;
+            height: 360px;
+            margin: 0 auto;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(229, 9, 20, 0.2);
+        }
+
+        /* Ponteiro indicador topo */
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #ffd700;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            transition: transform 0.1s ease;
+        }
+
+        .pointer.tick {
+            transform: translateX(-50%) rotate(-10deg);
+        }
+
+        /* Botões de Controle */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #e50914, #b20710);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+            transition: all 0.2s ease;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
+            background: linear-gradient(135deg, #f40612, #c50812);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #2c2c35, #1a1a22);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            border: 1px solid #444;
+        }
+
+        button.secondary:hover {
+            background: linear-gradient(135deg, #3d3d4a, #2c2c35);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Card de Resultado */
+        .result-card {
+            background: rgba(25, 25, 35, 0.9);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            animation: fadeIn 0.4s ease;
+            display: none;
+        }
+
+        .result-card h3 {
+            color: #ffd700;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        .result-card p {
+            font-size: 1.1rem;
+            color: #ddd;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Indicador de Etapa */
+        .step-indicator {
+            font-size: 0.9rem;
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ROLETAS DO CINEMA</h1>
+        <p class="subtitle">Descubra seu próximo filme em duas etapas</p>
+    </header>
+
+    <div class="main-container">
+        <div id="stepIndicator" class="step-indicator">Etapa 1: Girar o Diretor</div>
+        
+        <div class="wheel-container">
+            <div id="pointer" class="pointer"></div>
+            <canvas id="wheelCanvas" width="500" height="500"></canvas>
+        </div>
+
+        <div class="controls">
+            <button id="spinBtn" onclick="spinWheel()">GIRAR ROLETA</button>
+            <button id="backBtn" class="secondary" onclick="resetToDirectors()" style="display: none;">Voltar aos Diretores</button>
+        </div>
+
+        <div id="resultCard" class="result-card">
+            <h3 id="resultTitle">Título</h3>
+            <p id="resultDesc">Descrição</p>
+        </div>
+    </div>
+
+    <footer>
+        Feito para maratonas cinematográficas no VS Code
+    </footer>
+
+    <script>
+        // Banco de Dados: 20 Diretores com seus respectivos filmes icônicos
+        const directorsData = [
+            { nome: "Martin Scorsese", cor: "#8b0000", filmes: ["Os Bons Companheiros (1990)", "Taxi Driver (1976)", "O Lobo de Wall Street (2013)", "Os Infiltrados (2006)", "Cassino (1995)", "Touro Indomável (1980)"] },
+            { nome: "Quentin Tarantino", cor: "#b22222", filmes: ["Pulp Fiction (1994)", "Bastardos Inglórios (2009)", "Kill Bill: Vol. 1 (2003)", "Django Livre (2012)", "Cães de Aluguel (1992)", "Era Uma Vez em... Hollywood (2019)"] },
+            { nome: "Stanley Kubrick", cor: "#2f4f4f", filmes: ["2001: Uma Odisseia no Espaço (1968)", "O Iluminado (1980)", "Laranja Mecânica (1971)", "Nascido para Matar (1987)", "Dr. Fantástico (1964)", "De Olhos Bem Fechados (1999)"] },
+            { nome: "Steven Spielberg", cor: "#104e8b", filmes: ["Jurassic Park (1993)", "Tubarão (1975)", "A Lista de Schindler (1993)", "O Resgate do Soldado Ryan (1998)", "Indiana Jones: Os Caçadores (1981)", "E.T.: O Extraterrestre (1982)"] },
+            { nome: "Christopher Nolan", cor: "#363636", filmes: ["A Origem (2010)", "Interestelar (2014)", "O Cavaleiro das Trevas (2008)", "Oppenheimer (2023)", "Amnésia (2000)", "O Grande Truque (2006)"] },
+            { nome: "Alfred Hitchcock", cor: "#556b2f", filmes: ["Psicose (1960)", "Um Corpo que Cai (1958)", "Janela Indiscreta (1954)", "Intriga Internacional (1959)", "Os Pássaros (1963)", "Disque M para Matar (1954)"] },
+            { nome: "Hayao Miyazaki", cor: "#ff8c00", filmes: ["A Viagem de Chihiro (2001)", "Princesa Mononoke (1997)", "Meu Amigo Totoro (1988)", "O Castelo Animado (2004)", "Vidas ao Vento (2013)", "O Serviço de Entregas (1989)"] },
+            { nome: "Akira Kurosawa", cor: "#8b4513", filmes: ["Os Sete Samurais (1954)", "Rashomon (1950)", "Ran (1985)", "Ikiru (1952)", "Yojimbo (1961)", "Céu e Inferno (1963)"] },
+            { nome: "Francis F. Coppola", cor: "#483d8b", filmes: ["O Poderoso Chefão (1972)", "O Poderoso Chefão: Parte II (1974)", "Apocalypse Now (1979)", "A Conversação (1974)", "Drácula de Bram Stoker (1992)"] },
+            { nome: "Bong Joon-ho", cor: "#008b8b", filmes: ["Parasita (2019)", "Memórias de um Assassino (2003)", "O Hospedeiro (2006)", "Expresso do Amanhã (2013)", "Mother: A Busca (2009)"] },
+            { nome: "David Fincher", cor: "#2f4f4f", filmes: ["Clube da Luta (1999)", "Seven: Os Sete Crimes Capitais (1995)", "A Rede Social (2010)", "Garota Exemplar (2014)", "Zodíaco (2007)", "Millennium (2011)"] },
+            { nome: "Denis Villeneuve", cor: "#5c4033", filmes: ["Duna (2021)", "Duna: Parte Dois (2024)", "A Chegada (2016)", "Blade Runner 2049 (2017)", "Os Suspeitos (2013)", "Sicario (2015)"] },
+            { nome: "Pedro Almodóvar", cor: "#cd5c5c", filmes: ["Tudo Sobre Minha Mãe (1999)", "Fale com Ela (2002)", "Volver (2006)", "Dor e Glória (2019)", "A Pele que Habito (2011)", "Mulheres à Beira (1988)"] },
+            { nome: "Wong Kar-wai", cor: "#8b008b", filmes: ["Amor à Flor da Pele (2000)", "Amores Expressos (1994)", "Felizes Juntos (1997)", "Anjos Caídos (1995)", "2046 (2004)"] },
+            { nome: "Irmãos Coen", cor: "#2e8b57", filmes: ["Onde os Fracos Não Têm Vez (2007)", "Fargo (1996)", "O Grande Lebowski (1998)", "Bravura Indômita (2010)", "E Aí, Meu Irmão, Cadê Você? (2000)"] },
+            { nome: "Guillermo del Toro", cor: "#8b1a1a", filmes: ["O Labirinto do Fauno (2006)", "A Forma da Água (2017)", "O Espinhaço do Diabo (2001)", "Pinóquio (2022)", "Círculo de Fogo (2013)"] },
+            { nome: "Wes Anderson", cor: "#cd853f", filmes: ["O Grande Hotel Budapeste (2014)", "Moonrise Kingdom (2012)", "Os Excêntricos Tenenbaums (2001)", "O Fantástico Sr. Raposo (2009)", "Ilha dos Cachorros (2018)"] },
+            { nome: "Park Chan-wook", cor: "#4682b4", filmes: ["Oldboy (2003)", "A Criada (2016)", "Decisão de Partir (2022)", "Sede de Sangue (2009)", "Lady Vingança (2005)"] },
+            { nome: "Greta Gerwig", cor: "#db7093", filmes: ["Lady Bird: A Hora de Voar (2017)", "Adoráveis Mulheres (2019)", "Barbie (2023)", "Frances Ha (2012)"] },
+            { nome: "Kleber Mendonça F.", cor: "#20b2aa", filmes: ["Bacurau (2019)", "Aquarius (2016)", "O Som ao Redor (2012)", "Retratos Fantasmas (2023)"] }
+        ];
+
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx = canvas.getContext("2d");
+        const spinBtn = document.getElementById("spinBtn");
+        const backBtn = document.getElementById("backBtn");
+        const resultCard = document.getElementById("resultCard");
+        const resultTitle = document.getElementById("resultTitle");
+        const resultDesc = document.getElementById("resultDesc");
+        const stepIndicator = document.getElementById("stepIndicator");
+        const pointer = document.getElementById("pointer");
+
+        let currentMode = "directors"; // 'directors' ou 'movies'
+        let selectedDirector = null;
+        let currentAngle = 0;
+        let isSpinning = false;
+        let items = directorsData.map(d => d.nome);
+        let colors = directorsData.map(d => d.cor);
+
+        // Paleta de cores padrão caso precise gerar dinamicamente
+        const fallbackColors = ["#b22222", "#104e8b", "#2f4f4f", "#8b4513", "#556b2f", "#483d8b", "#8b008b", "#2e8b57", "#cd5c5c", "#ff8c00"];
+
+        function drawWheel() {
+            const numItems = items.length;
+            const arcSize = (2 * Math.PI) / numItems;
+            const center = canvas.width / 2;
+            const radius = center - 10;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < numItems; i++) {
+                const angle = currentAngle + i * arcSize;
+
+                // Desenhar fatia
+                ctx.beginPath();
+                ctx.fillStyle = colors[i] || fallbackColors[i % fallbackColors.length];
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, radius, angle, angle + arcSize);
+                ctx.lineTo(center, center);
+                ctx.fill();
+
+                // Borda da fatia
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#1a1a24";
+                ctx.stroke();
+
+                // Desenhar texto
+                ctx.save();
+                ctx.translate(center, center);
+                ctx.rotate(angle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = numItems > 10 ? "bold 11px sans-serif" : "bold 13px sans-serif";
+                
+                // Limitar tamanho do texto para caber na fatia
+                let displayText = items[i];
+                if (displayText.length > 22) {
+                    displayText = displayText.substring(0, 20) + "...";
+                }
+
+                ctx.fillText(displayText, radius - 20, 5);
+                ctx.restore();
+            }
+
+            // Círculo central da roleta
+            ctx.beginPath();
+            ctx.arc(center, center, 35, 0, 2 * Math.PI);
+            ctx.fillStyle = "#111116";
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "#ffd700";
+            ctx.stroke();
+        }
+
+        function spinWheel() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            resultCard.style.display = "none";
+
+            const numItems = items.length;
+            const arcSize = (2 * Math.PI) / numItems;
+            
+            // Giro randômico forte (entre 5 e 8 voltas completas + deslocamento aleatório)
+            const minSpins = 5;
+            const maxSpins = 8;
+            const randomSpins = Math.floor(Math.random() * (maxSpins - minSpins + 1)) + minSpins;
+            const extraAngle = Math.random() * (2 * Math.PI);
+            const totalRotation = (randomSpins * 2 * Math.PI) + extraAngle;
+
+            const startAngle = currentAngle;
+            const startTime = performance.now();
+            const duration = 4000; // 4 segundos de animação
+
+            let lastIndexChecked = -1;
+
+            function animateSpin(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Efeito de desaceleração suave (Ease Out Quartic/Cubic)
+                const easeOut = 1 - Math.pow(1 - progress, 4);
+
+                currentAngle = startAngle + (totalRotation * easeOut);
+                drawWheel();
+
+                // Efeito visual do ponteiro batendo nos pinos
+                const normalizedAngle = (2 * Math.PI - (currentAngle % (2 * Math.PI))) % (2 * Math.PI);
+                const winningIndex = Math.floor(normalizedAngle / arcSize) % numItems;
+                if (winningIndex !== lastIndexChecked) {
+                    pointer.classList.add("tick");
+                    setTimeout(() => pointer.classList.remove("tick"), 80);
+                    lastIndexChecked = winningIndex;
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    handleSpinResult(winningIndex);
+                }
+            }
+
+            requestAnimationFrame(animateSpin);
+        }
+
+        function handleSpinResult(winningIndex) {
+            const winner = items[winningIndex];
+
+            if (currentMode === "directors") {
+                selectedDirector = directorsData.find(d => d.nome === winner);
+                
+                // Configurar roleta para os filmes deste diretor
+                items = selectedDirector.filmes;
+                colors = items.map((_, i) => i % 2 === 0 ? "#b20710" : "#1a1a24");
+                currentAngle = 0;
+                currentMode = "movies";
+
+                stepIndicator.innerText = `Etapa 2: Sorteando Filme de ${selectedDirector.nome}`;
+                spinBtn.innerText = "GIRAR FILME";
+                backBtn.style.display = "inline-block";
+
+                drawWheel();
+
+                resultTitle.innerText = `Diretor Escolhido: ${selectedDirector.nome}!`;
+                resultDesc.innerText = `Agora clique em 'GIRAR FILME' para sortear qual obra-prima dele você vai assistir hoje.`;
+                resultCard.style.display = "block";
+            } else {
+                // Resultado final do filme
+                resultTitle.innerText = `🎬 Filme Sorteado!`;
+                resultDesc.innerText = `Prepare a pipoca: ${winner}\nDiretor: ${selectedDirector.nome}`;
+                resultCard.style.display = "block";
+                spinBtn.innerText = "GIRAR NOVAMENTE";
+            }
+        }
+
+        function resetToDirectors() {
+            currentMode = "directors";
+            selectedDirector = null;
+            items = directorsData.map(d => d.nome);
+            colors = directorsData.map(d => d.cor);
+            currentAngle = 0;
+
+            stepIndicator.innerText = "Etapa 1: Girar o Diretor";
+            spinBtn.innerText = "GIRAR ROLETA";
+            backBtn.style.display = "none";
+            resultCard.style.display = "none";
+            drawWheel();
+        }
+
+        // Inicializar roleta ao carregar a página
+        window.onload = () => {
+            drawWheel();
+        };
+    </script>
+</body>
+</html>
