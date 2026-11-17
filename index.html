@@ -3,421 +3,1212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roleta de Cinema - Diretores e Filmes</title>
+    <title>Roleta Curada — Filmes, Séries & Animes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-main: #0c0d10;
+            --bg-surface: #14161c;
+            --bg-elevated: #1c1f27;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+
+            /* Tema dinâmico por aba */
+            --accent: #e50914;
+            --accent-hover: #ff1f2c;
+            --accent-soft: rgba(229, 9, 20, 0.14);
+            --accent-glow: rgba(229, 9, 20, 0.35);
+        }
+
+        [data-theme="series"] {
+            --accent: #0ea5e9;
+            --accent-hover: #38bdf8;
+            --accent-soft: rgba(14, 165, 233, 0.14);
+            --accent-glow: rgba(14, 165, 233, 0.35);
+        }
+
+        [data-theme="animes"] {
+            --accent: #f97316;
+            --accent-hover: #fb923c;
+            --accent-soft: rgba(249, 115, 22, 0.14);
+            --accent-glow: rgba(249, 115, 22, 0.35);
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background-color: #0b0b0e;
-            color: #f4f4f9;
+            background-color: var(--bg-main);
+            background-image:
+                radial-gradient(circle at 50% 0%, var(--accent-soft), transparent 55%),
+                linear-gradient(to bottom, #0c0d10, #090a0d);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            padding: 24px 16px 40px;
+            transition: background 0.35s ease;
             overflow-x: hidden;
-            padding: 20px;
         }
 
-        header {
-            text-align: center;
-            margin-top: 10px;
+        /* Canvas de confetes em tela cheia sem bloquear cliques */
+        #confettiCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
         }
 
-        h1 {
-            font-size: 2.2rem;
-            color: #e50914;
-            letter-spacing: 2px;
-            text-shadow: 0 2px 10px rgba(229, 9, 20, 0.4);
-            margin-bottom: 5px;
+        /* Cabeçalho */
+        .topbar {
+            width: 100%;
+            max-width: 760px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            gap: 12px;
         }
 
-        p.subtitle {
-            color: #a0a0ab;
-            font-size: 1rem;
+        .brand h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
         }
 
-        .main-container {
+        .brand span {
+            color: var(--accent);
+            transition: color 0.3s ease;
+        }
+
+        .brand p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .icon-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border-color: var(--border-strong);
+        }
+
+        /* Abas de Categorias */
+        .tabs-wrapper {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 5px;
+            border-radius: 14px;
+            display: inline-flex;
+            gap: 4px;
+            margin-bottom: 22px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 9px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .tab-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .tab-btn.active .tab-dot {
+            background: var(--accent);
+            transform: scale(1.2);
+        }
+
+        /* Área Principal */
+        .stage {
+            width: 100%;
+            max-width: 760px;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 14px;
+            border-radius: 999px;
+            margin-bottom: 20px;
+        }
+
+        .step-badge strong {
+            color: var(--accent);
+            transition: color 0.3s ease;
+        }
+
+        /* Roleta */
+        .wheel-stage {
+            position: relative;
+            width: min(410px, 88vw);
+            height: min(410px, 88vw);
+            display: flex;
+            align-items: center;
             justify-content: center;
-            flex: 1;
-            width: 100%;
-            max-width: 600px;
-            margin: 20px 0;
-            position: relative;
+            margin-bottom: 24px;
         }
 
-        /* Container da Roleta */
-        .wheel-container {
-            position: relative;
-            width: 360px;
-            height: 360px;
-            margin: 0 auto;
+        .wheel-rim {
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 1px solid var(--border-strong);
+            background: radial-gradient(circle, transparent 66%, rgba(0, 0, 0, 0.45) 100%);
+            pointer-events: none;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
         }
 
-        canvas {
+        #wheelCanvas {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(229, 9, 20, 0.2);
+            display: block;
+            cursor: pointer;
         }
 
-        /* Ponteiro indicador topo */
-        .pointer {
+        /* Ponteiro no topo */
+        .pointer-wrap {
             position: absolute;
-            top: -15px;
+            top: -16px;
             left: 50%;
             transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid #ffd700;
-            z-index: 10;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-            transition: transform 0.1s ease;
+            z-index: 15;
+            transform-origin: 50% 6px;
+            transition: transform 0.07s cubic-bezier(0.22, 1, 0.36, 1);
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+            pointer-events: none;
         }
 
-        .pointer.tick {
-            transform: translateX(-50%) rotate(-10deg);
+        .pointer-wrap.tick {
+            transform: translateX(-50%) rotate(-16deg);
         }
 
-        /* Botões de Controle */
-        .controls {
-            margin-top: 30px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        button {
-            background: linear-gradient(135deg, #e50914, #b20710);
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 30px;
+        /* Botão central da roleta */
+        .center-hub {
+            position: absolute;
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            border: 3px solid var(--accent);
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-            transition: all 0.2s ease;
-            letter-spacing: 1px;
+            z-index: 10;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+            transition: transform 0.15s ease, border-color 0.3s ease, background 0.2s ease;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
-            background: linear-gradient(135deg, #f40612, #c50812);
+        .center-hub:hover:not(:disabled) {
+            transform: scale(1.06);
+            background: #252934;
         }
 
-        button:active {
-            transform: translateY(1px);
+        .center-hub:active:not(:disabled) {
+            transform: scale(0.96);
         }
 
-        button.secondary {
-            background: linear-gradient(135deg, #2c2c35, #1a1a22);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-            border: 1px solid #444;
+        .center-hub:disabled {
+            cursor: default;
+            opacity: 0.85;
         }
 
-        button.secondary:hover {
-            background: linear-gradient(135deg, #3d3d4a, #2c2c35);
+        /* Controles */
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        /* Card de Resultado */
-        .result-card {
-            background: rgba(25, 25, 35, 0.9);
-            border: 1px solid #333;
+        .btn-primary {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 12px 26px;
             border-radius: 12px;
-            padding: 20px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px var(--accent-glow);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 12px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg-elevated);
+            border-color: var(--border-strong);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .shortcut-hint {
+            margin-top: 10px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .shortcut-hint kbd {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 5px;
+            padding: 1px 6px;
+            font-family: inherit;
+            color: var(--text-secondary);
+        }
+
+        /* Banner intermediário (Etapa 1 concluída) */
+        .intermediate-banner {
             margin-top: 20px;
             width: 100%;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-            animation: fadeIn 0.4s ease;
+            max-width: 460px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--accent);
+            border-radius: 12px;
+            padding: 14px 18px;
             display: none;
+            animation: slideUp 0.28s ease;
         }
 
-        .result-card h3 {
-            color: #ffd700;
-            font-size: 1.3rem;
+        .intermediate-banner .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+        }
+
+        .intermediate-banner .value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Modal de Resultado Final */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 6, 8, 0.78);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 90;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+            animation: fadeIn 0.22s ease;
+        }
+
+        .result-modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            padding: 28px 24px;
+            text-align: center;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+            animation: popIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            background: var(--accent-soft);
+            padding: 5px 12px;
+            border-radius: 999px;
+            margin-bottom: 14px;
+        }
+
+        .result-modal h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.65rem;
+            line-height: 1.25;
+            color: var(--text-primary);
             margin-bottom: 8px;
         }
 
-        .result-card p {
-            font-size: 1.1rem;
-            color: #ddd;
+        .result-modal .creator-sub {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* Histórico da Sessão */
+        .history-section {
+            margin-top: 34px;
+            width: 100%;
+            max-width: 560px;
+            display: none;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .history-header span {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .clear-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.86rem;
+        }
+
+        .history-item .title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .history-item .meta {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        .history-pill {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            white-space: nowrap;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Indicador de Etapa */
-        .step-indicator {
-            font-size: 0.9rem;
-            color: #ffd700;
-            background: rgba(255, 215, 0, 0.1);
-            padding: 6px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            margin-bottom: 15px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        footer {
-            text-align: center;
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 10px;
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.94) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
     </style>
 </head>
-<body>
+<body data-theme="filmes">
 
-    <header>
-        <h1>ROLETAS DO CINEMA</h1>
-        <p class="subtitle">Descubra seu próximo filme em duas etapas</p>
+    <canvas id="confettiCanvas"></canvas>
+
+    <header class="topbar">
+        <div class="brand">
+            <h1>Roleta <span>Curada</span></h1>
+            <p>Escolha a categoria e deixe o acaso decidir a próxima maratona</p>
+        </div>
+        <button id="soundToggle" class="icon-btn" title="Alternar som" aria-label="Alternar som">
+            <svg id="soundIconOn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <svg id="soundIconOff" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <line x1="23" y1="9" x2="17" y2="15"></line>
+                <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+        </button>
     </header>
 
-    <div class="main-container">
-        <div id="stepIndicator" class="step-indicator">Etapa 1: Girar o Diretor</div>
-        
-        <div class="wheel-container">
-            <div id="pointer" class="pointer"></div>
-            <canvas id="wheelCanvas" width="500" height="500"></canvas>
+    <nav class="tabs-wrapper" role="tablist" aria-label="Categorias">
+        <button class="tab-btn active" data-category="filmes" role="tab" aria-selected="true">
+            <span class="tab-dot"></span> Filmes
+        </button>
+        <button class="tab-btn" data-category="series" role="tab" aria-selected="false">
+            <span class="tab-dot"></span> Séries
+        </button>
+        <button class="tab-btn" data-category="animes" role="tab" aria-selected="false">
+            <span class="tab-dot"></span> Animes
+        </button>
+    </nav>
+
+    <main class="stage">
+        <div class="step-badge" id="stepBadge">
+            <strong id="stepLabel">Etapa 1 de 2</strong>
+            <span id="stepDesc">Sortear Diretor</span>
         </div>
 
-        <div class="controls">
-            <button id="spinBtn" onclick="spinWheel()">GIRAR ROLETA</button>
-            <button id="backBtn" class="secondary" onclick="resetToDirectors()" style="display: none;">Voltar aos Diretores</button>
+        <div class="wheel-stage">
+            <div class="wheel-rim"></div>
+            <div class="pointer-wrap" id="pointer">
+                <svg width="28" height="34" viewBox="0 0 28 34" fill="none">
+                    <path d="M14 34L2.5 8C0.8 4.2 3.6 0 7.8 0H20.2C24.4 0 27.2 4.2 25.5 8L14 34Z" fill="#FBBF24"/>
+                    <circle cx="14" cy="7" r="3" fill="#14161C"/>
+                </svg>
+            </div>
+            <canvas id="wheelCanvas"></canvas>
+            <button id="hubBtn" class="center-hub" aria-label="Girar roleta">GIRAR</button>
         </div>
 
-        <div id="resultCard" class="result-card">
-            <h3 id="resultTitle">Título</h3>
-            <p id="resultDesc">Descrição</p>
+        <div class="actions">
+            <button id="spinBtn" class="btn-primary">Girar Diretor</button>
+            <button id="backBtn" class="btn-secondary" style="display: none;">Trocar Diretor</button>
+        </div>
+
+        <p class="shortcut-hint">Dica: pressione <kbd>Espaço</kbd> para girar</p>
+
+        <div id="intermediateBanner" class="intermediate-banner">
+            <div class="label" id="interLabel">Diretor selecionado</div>
+            <div class="value" id="interValue">Martin Scorsese</div>
+        </div>
+
+        <section id="historySection" class="history-section">
+            <div class="history-header">
+                <span>Últimos sorteios</span>
+                <button id="clearHistoryBtn" class="clear-btn">Limpar</button>
+            </div>
+            <div id="historyList" class="history-list"></div>
+        </section>
+    </main>
+
+    <!-- Modal de Resultado Final -->
+    <div id="resultModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+        <div class="result-modal">
+            <div class="modal-tag" id="modalCategoryTag">Filme Sorteado</div>
+            <h2 id="modalTitle">Pulp Fiction (1994)</h2>
+            <p class="creator-sub" id="modalCreator">Direção de Quentin Tarantino</p>
+            <div class="modal-actions">
+                <button id="modalSpinSameBtn" class="btn-primary">Girar outro título deste criador</button>
+                <div class="modal-row">
+                    <button id="modalResetBtn" class="btn-secondary">Novo criador</button>
+                    <button id="modalCloseBtn" class="btn-secondary">Fechar</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <footer>
-        Feito para maratonas cinematográficas no VS Code
-    </footer>
-
     <script>
-        // Banco de Dados: 20 Diretores com seus respectivos filmes icônicos
-        const directorsData = [
-            { nome: "Martin Scorsese", cor: "#8b0000", filmes: ["Os Bons Companheiros (1990)", "Taxi Driver (1976)", "O Lobo de Wall Street (2013)", "Os Infiltrados (2006)", "Cassino (1995)", "Touro Indomável (1980)"] },
-            { nome: "Quentin Tarantino", cor: "#b22222", filmes: ["Pulp Fiction (1994)", "Bastardos Inglórios (2009)", "Kill Bill: Vol. 1 (2003)", "Django Livre (2012)", "Cães de Aluguel (1992)", "Era Uma Vez em... Hollywood (2019)"] },
-            { nome: "Stanley Kubrick", cor: "#2f4f4f", filmes: ["2001: Uma Odisseia no Espaço (1968)", "O Iluminado (1980)", "Laranja Mecânica (1971)", "Nascido para Matar (1987)", "Dr. Fantástico (1964)", "De Olhos Bem Fechados (1999)"] },
-            { nome: "Steven Spielberg", cor: "#104e8b", filmes: ["Jurassic Park (1993)", "Tubarão (1975)", "A Lista de Schindler (1993)", "O Resgate do Soldado Ryan (1998)", "Indiana Jones: Os Caçadores (1981)", "E.T.: O Extraterrestre (1982)"] },
-            { nome: "Christopher Nolan", cor: "#363636", filmes: ["A Origem (2010)", "Interestelar (2014)", "O Cavaleiro das Trevas (2008)", "Oppenheimer (2023)", "Amnésia (2000)", "O Grande Truque (2006)"] },
-            { nome: "Alfred Hitchcock", cor: "#556b2f", filmes: ["Psicose (1960)", "Um Corpo que Cai (1958)", "Janela Indiscreta (1954)", "Intriga Internacional (1959)", "Os Pássaros (1963)", "Disque M para Matar (1954)"] },
-            { nome: "Hayao Miyazaki", cor: "#ff8c00", filmes: ["A Viagem de Chihiro (2001)", "Princesa Mononoke (1997)", "Meu Amigo Totoro (1988)", "O Castelo Animado (2004)", "Vidas ao Vento (2013)", "O Serviço de Entregas (1989)"] },
-            { nome: "Akira Kurosawa", cor: "#8b4513", filmes: ["Os Sete Samurais (1954)", "Rashomon (1950)", "Ran (1985)", "Ikiru (1952)", "Yojimbo (1961)", "Céu e Inferno (1963)"] },
-            { nome: "Francis F. Coppola", cor: "#483d8b", filmes: ["O Poderoso Chefão (1972)", "O Poderoso Chefão: Parte II (1974)", "Apocalypse Now (1979)", "A Conversação (1974)", "Drácula de Bram Stoker (1992)"] },
-            { nome: "Bong Joon-ho", cor: "#008b8b", filmes: ["Parasita (2019)", "Memórias de um Assassino (2003)", "O Hospedeiro (2006)", "Expresso do Amanhã (2013)", "Mother: A Busca (2009)"] },
-            { nome: "David Fincher", cor: "#2f4f4f", filmes: ["Clube da Luta (1999)", "Seven: Os Sete Crimes Capitais (1995)", "A Rede Social (2010)", "Garota Exemplar (2014)", "Zodíaco (2007)", "Millennium (2011)"] },
-            { nome: "Denis Villeneuve", cor: "#5c4033", filmes: ["Duna (2021)", "Duna: Parte Dois (2024)", "A Chegada (2016)", "Blade Runner 2049 (2017)", "Os Suspeitos (2013)", "Sicario (2015)"] },
-            { nome: "Pedro Almodóvar", cor: "#cd5c5c", filmes: ["Tudo Sobre Minha Mãe (1999)", "Fale com Ela (2002)", "Volver (2006)", "Dor e Glória (2019)", "A Pele que Habito (2011)", "Mulheres à Beira (1988)"] },
-            { nome: "Wong Kar-wai", cor: "#8b008b", filmes: ["Amor à Flor da Pele (2000)", "Amores Expressos (1994)", "Felizes Juntos (1997)", "Anjos Caídos (1995)", "2046 (2004)"] },
-            { nome: "Irmãos Coen", cor: "#2e8b57", filmes: ["Onde os Fracos Não Têm Vez (2007)", "Fargo (1996)", "O Grande Lebowski (1998)", "Bravura Indômita (2010)", "E Aí, Meu Irmão, Cadê Você? (2000)"] },
-            { nome: "Guillermo del Toro", cor: "#8b1a1a", filmes: ["O Labirinto do Fauno (2006)", "A Forma da Água (2017)", "O Espinhaço do Diabo (2001)", "Pinóquio (2022)", "Círculo de Fogo (2013)"] },
-            { nome: "Wes Anderson", cor: "#cd853f", filmes: ["O Grande Hotel Budapeste (2014)", "Moonrise Kingdom (2012)", "Os Excêntricos Tenenbaums (2001)", "O Fantástico Sr. Raposo (2009)", "Ilha dos Cachorros (2018)"] },
-            { nome: "Park Chan-wook", cor: "#4682b4", filmes: ["Oldboy (2003)", "A Criada (2016)", "Decisão de Partir (2022)", "Sede de Sangue (2009)", "Lady Vingança (2005)"] },
-            { nome: "Greta Gerwig", cor: "#db7093", filmes: ["Lady Bird: A Hora de Voar (2017)", "Adoráveis Mulheres (2019)", "Barbie (2023)", "Frances Ha (2012)"] },
-            { nome: "Kleber Mendonça F.", cor: "#20b2aa", filmes: ["Bacurau (2019)", "Aquarius (2016)", "O Som ao Redor (2012)", "Retratos Fantasmas (2023)"] }
-        ];
+        // ==========================================
+        // 1. BANCO DE DADOS CURADO (3 CATEGORIAS)
+        // ==========================================
+        const catalogData = {
+            filmes: {
+                label: "Filmes",
+                badgeTag: "Filme Sorteado",
+                step1Noun: "Diretor",
+                step2Noun: "Filme",
+                creatorPrefix: "Direção de",
+                palette: ["#7f1d1d", "#1e293b", "#991b1b", "#27272a", "#b91c1c", "#1f2937"],
+                groups: [
+                    { nome: "Martin Scorsese", itens: ["Os Bons Companheiros (1990)", "Taxi Driver (1976)", "O Lobo de Wall Street (2013)", "Os Infiltrados (2006)", "Cassino (1995)", "Touro Indomável (1980)"] },
+                    { nome: "Quentin Tarantino", itens: ["Pulp Fiction (1994)", "Bastardos Inglórios (2009)", "Kill Bill: Vol. 1 (2003)", "Django Livre (2012)", "Cães de Aluguel (1992)", "Era Uma Vez em... Hollywood (2019)"] },
+                    { nome: "Stanley Kubrick", itens: ["2001: Uma Odisseia no Espaço (1968)", "O Iluminado (1980)", "Laranja Mecânica (1971)", "Nascido para Matar (1987)", "Dr. Fantástico (1964)", "De Olhos Bem Fechados (1999)"] },
+                    { nome: "Steven Spielberg", itens: ["Jurassic Park (1993)", "Tubarão (1975)", "A Lista de Schindler (1993)", "O Resgate do Soldado Ryan (1998)", "Caçadores da Arca Perdida (1981)", "E.T.: O Extraterrestre (1982)"] },
+                    { nome: "Christopher Nolan", itens: ["A Origem (2010)", "Interestelar (2014)", "O Cavaleiro das Trevas (2008)", "Oppenheimer (2023)", "Amnésia (2000)", "O Grande Truque (2006)"] },
+                    { nome: "Alfred Hitchcock", itens: ["Psicose (1960)", "Um Corpo que Cai (1958)", "Janela Indiscreta (1954)", "Intriga Internacional (1959)", "Os Pássaros (1963)", "Disque M para Matar (1954)"] },
+                    { nome: "Akira Kurosawa", itens: ["Os Sete Samurais (1954)", "Rashomon (1950)", "Ran (1985)", "Ikiru (1952)", "Yojimbo (1961)", "Céu e Inferno (1963)"] },
+                    { nome: "Francis F. Coppola", itens: ["O Poderoso Chefão (1972)", "O Poderoso Chefão: Parte II (1974)", "Apocalypse Now (1979)", "A Conversação (1974)", "Drácula de Bram Stoker (1992)"] },
+                    { nome: "Bong Joon-ho", itens: ["Parasita (2019)", "Memórias de um Assassino (2003)", "O Hospedeiro (2006)", "Expresso do Amanhã (2013)", "Mother: A Busca (2009)"] },
+                    { nome: "David Fincher", itens: ["Clube da Luta (1999)", "Seven: Os Sete Crimes Capitais (1995)", "A Rede Social (2010)", "Garota Exemplar (2014)", "Zodíaco (2007)", "Millennium (2011)"] },
+                    { nome: "Denis Villeneuve", itens: ["Duna (2021)", "Duna: Parte Dois (2024)", "A Chegada (2016)", "Blade Runner 2049 (2017)", "Os Suspeitos (2013)", "Sicario (2015)"] },
+                    { nome: "Wong Kar-wai", itens: ["Amor à Flor da Pele (2000)", "Amores Expressos (1994)", "Felizes Juntos (1997)", "Anjos Caídos (1995)", "2046 (2004)"] },
+                    { nome: "Irmãos Coen", itens: ["Onde os Fracos Não Têm Vez (2007)", "Fargo (1996)", "O Grande Lebowski (1998)", "Bravura Indômita (2010)", "E Aí, Meu Irmão, Cadê Você? (2000)"] },
+                    { nome: "Guillermo del Toro", itens: ["O Labirinto do Fauno (2006)", "A Forma da Água (2017)", "O Espinhaço do Diabo (2001)", "Pinóquio (2022)", "Círculo de Fogo (2013)"] },
+                    { nome: "Wes Anderson", itens: ["O Grande Hotel Budapeste (2014)", "Moonrise Kingdom (2012)", "Os Excêntricos Tenenbaums (2001)", "O Fantástico Sr. Raposo (2009)", "Ilha dos Cachorros (2018)"] },
+                    { nome: "Park Chan-wook", itens: ["Oldboy (2003)", "A Criada (2016)", "Decisão de Partir (2022)", "Sede de Sangue (2009)", "Lady Vingança (2005)"] },
+                    { nome: "Kleber Mendonça F.", itens: ["Bacurau (2019)", "Aquarius (2016)", "O Som ao Redor (2012)", "Retratos Fantasmas (2023)"] },
+                    { nome: "Pedro Almodóvar", itens: ["Tudo Sobre Minha Mãe (1999)", "Fale com Ela (2002)", "Volver (2006)", "Dor e Glória (2019)", "A Pele que Habito (2011)"] }
+                ]
+            },
+            series: {
+                label: "Séries",
+                badgeTag: "Série Sorteada",
+                step1Noun: "Showrunner / Casa",
+                step2Noun: "Série",
+                creatorPrefix: "Universo / Criação de",
+                palette: ["#0c4a6e", "#1e293b", "#0369a1", "#27272a", "#0284c7", "#1f2937"],
+                groups: [
+                    { nome: "Vince Gilligan", itens: ["Breaking Bad", "Better Call Saul", "Arquivo X (Episódios Clássicos)"] },
+                    { nome: "HBO Prestige", itens: ["Família Soprano", "The Wire", "Succession", "Chernobyl", "True Detective (T1)", "Band of Brothers"] },
+                    { nome: "Mike Flanagan", itens: ["A Maldição da Residência Hill", "Missa da Meia-Noite", "A Queda da Casa de Usher", "A Maldição da Mansão Bly"] },
+                    { nome: "Damon Lindelof", itens: ["The Leftovers", "Watchmen", "Lost", "Mrs. Davis"] },
+                    { nome: "Apple TV+ Sci-Fi", itens: ["Ruptura (Severance)", "Silo", "Fundação", "Matéria Escura", "For All Mankind"] },
+                    { nome: "Noah Hawley", itens: ["Fargo (Série)", "Legion", "Alien: Earth"] },
+                    { nome: "Charlie Brooker", itens: ["Black Mirror", "Dead Set", "Cunk on Earth"] },
+                    { nome: "FX / Hulu", itens: ["O Urso (The Bear)", "Shōgun", "Atlanta", "Mr Inbetween", "Devs"] },
+                    { nome: "Baran bo Odar", itens: ["Dark", "1899", "Who Am I"] },
+                    { nome: "David Fincher (TV)", itens: ["Mindhunter", "House of Cards", "Love, Death & Robots"] },
+                    { nome: "Comédias Cult", itens: ["The Office (US)", "Fleabag", "Arrested Development", "Parks and Recreation", "Community", "BoJack Horseman"] },
+                    { nome: "Drama & Suspense", itens: ["Mr. Robot", "Severance", "The Americans", "Ozark", "Narcos", "Peaky Blinders"] },
+                    { nome: "Fantasia & Épicos", itens: ["Game of Thrones", "Andor", "The Last of Us", "The Expanse", "Arcane"] },
+                    { nome: "Minisséries Curtas", itens: ["O Gambito da Rainha", "Mare of Easttown", "Sharp Objects", "Bebê Rena", "Normal People"] }
+                ]
+            },
+            animes: {
+                label: "Animes",
+                badgeTag: "Anime Sorteado",
+                step1Noun: "Estúdio / Diretor",
+                step2Noun: "Anime",
+                creatorPrefix: "Produção / Direção de",
+                palette: ["#7c2d12", "#1e293b", "#9a3412", "#27272a", "#c2410c", "#1f2937"],
+                groups: [
+                    { nome: "Studio Ghibli", itens: ["A Viagem de Chihiro", "Princesa Mononoke", "Meu Amigo Totoro", "O Castelo Animado", "Túmulo dos Vagalumes", "O Conto da Princesa Kaguya"] },
+                    { nome: "MAPPA", itens: ["Jujutsu Kaisen", "Attack on Titan (Final)", "Chainsaw Man", "Vinland Saga (T2)", "Dororo", "Dorohedoro"] },
+                    { nome: "Madhouse", itens: ["Frieren e a Jornada para o Além", "Death Note", "Hunter x Hunter (2011)", "Monster", "One Punch Man (T1)", "Hajime no Ippo"] },
+                    { nome: "Bones", itens: ["Fullmetal Alchemist: Brotherhood", "Mob Psycho 100", "Cowboy Bebop: O Filme", "Space Dandy", "Bungou Stray Dogs"] },
+                    { nome: "Satoshi Kon", itens: ["Perfect Blue", "Paprika", "Millennium Actress", "Tokyo Godfathers", "Paranoia Agent"] },
+                    { nome: "Shinichiro Watanabe", itens: ["Cowboy Bebop", "Samurai Champloo", "Terror in Resonance", "Kids on the Slope"] },
+                    { nome: "Wit Studio", itens: ["Vinland Saga (T1)", "Attack on Titan (T1–T3)", "Ranking of Kings", "Vivy: Fluorite Eye's Song", "Spy x Family"] },
+                    { nome: "Ufotable", itens: ["Demon Slayer", "Fate/Zero", "Fate/stay night: Unlimited Blade Works", "Kara no Kyoukai"] },
+                    { nome: "Kyoto Animation", itens: ["Violet Evergarden", "A Voz do Silêncio", "Hyouka", "Clannad: After Story", "Nichijou"] },
+                    { nome: "Trigger / Gainax", itens: ["Cyberpunk: Edgerunners", "Gurren Lagann", "Neon Genesis Evangelion", "Kill la Kill", "Dungeon Meshi"] },
+                    { nome: "Makoto Shinkai", itens: ["Your Name (Kimi no Na wa)", "Suzume", "O Tempo com Você", "O Jardim das Palavras"] },
+                    { nome: "Science SARU", itens: ["Dandadan", "Devilman Crybaby", "Ping Pong the Animation", "Keep Your Hands Off Eizouken!"] },
+                    { nome: "Shaft", itens: ["Monogatari Series", "Puella Magi Madoka Magica", "March Comes in Like a Lion"] },
+                    { nome: "Clássicos Shonen", itens: ["Yu Yu Hakusho", "Dragon Ball Z", "Naruto Shippuden", "Bleach: Thousand-Year Blood War", "Haikyuu!!"] }
+                ]
+            }
+        };
 
-        const canvas = document.getElementById("wheelCanvas");
-        const ctx = canvas.getContext("2d");
+        // ==========================================
+        // 2. ESTADO E ELEMENTOS DO DOM
+        // ==========================================
+        const wheelCanvas = document.getElementById("wheelCanvas");
+        const ctx = wheelCanvas.getContext("2d");
+        const pointer = document.getElementById("pointer");
+        const hubBtn = document.getElementById("hubBtn");
         const spinBtn = document.getElementById("spinBtn");
         const backBtn = document.getElementById("backBtn");
-        const resultCard = document.getElementById("resultCard");
-        const resultTitle = document.getElementById("resultTitle");
-        const resultDesc = document.getElementById("resultDesc");
-        const stepIndicator = document.getElementById("stepIndicator");
-        const pointer = document.getElementById("pointer");
+        const stepLabel = document.getElementById("stepLabel");
+        const stepDesc = document.getElementById("stepDesc");
+        const interBanner = document.getElementById("intermediateBanner");
+        const interLabel = document.getElementById("interLabel");
+        const interValue = document.getElementById("interValue");
+        const tabButtons = document.querySelectorAll(".tab-btn");
 
-        let currentMode = "directors"; // 'directors' ou 'movies'
-        let selectedDirector = null;
+        // Modal
+        const modalBackdrop = document.getElementById("resultModalBackdrop");
+        const modalCategoryTag = document.getElementById("modalCategoryTag");
+        const modalTitle = document.getElementById("modalTitle");
+        const modalCreator = document.getElementById("modalCreator");
+        const modalSpinSameBtn = document.getElementById("modalSpinSameBtn");
+        const modalResetBtn = document.getElementById("modalResetBtn");
+        const modalCloseBtn = document.getElementById("modalCloseBtn");
+
+        // Histórico & Áudio
+        const historySection = document.getElementById("historySection");
+        const historyList = document.getElementById("historyList");
+        const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+        const soundToggle = document.getElementById("soundToggle");
+        const soundIconOn = document.getElementById("soundIconOn");
+        const soundIconOff = document.getElementById("soundIconOff");
+
+        let activeCategory = "filmes";
+        let currentStep = 1; // 1 = Criador/Estúdio, 2 = Título
+        let selectedGroup = null;
+        let wheelItems = [];
+        let wheelColors = [];
         let currentAngle = 0;
         let isSpinning = false;
-        let items = directorsData.map(d => d.nome);
-        let colors = directorsData.map(d => d.cor);
+        let soundEnabled = true;
+        let audioCtx = null;
+        let spinHistory = [];
 
-        // Paleta de cores padrão caso precise gerar dinamicamente
-        const fallbackColors = ["#b22222", "#104e8b", "#2f4f4f", "#8b4513", "#556b2f", "#483d8b", "#8b008b", "#2e8b57", "#cd5c5c", "#ff8c00"];
+        // Carrega histórico salvo
+        try {
+            const saved = localStorage.getItem("roleta_curada_history");
+            if (saved) spinHistory = JSON.parse(saved);
+        } catch (e) {
+            spinHistory = [];
+        }
+
+        // ==========================================
+        // 3. ÁUDIO SUTIL (WEB AUDIO API)
+        // ==========================================
+        function playTickSound() {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === "suspended") audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = "triangle";
+                osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.032);
+
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.032);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.035);
+            } catch (e) {}
+        }
+
+        function playWinSound() {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const notes = [523.25, 659.25, 783.99, 1046.5];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    const start = audioCtx.currentTime + idx * 0.065;
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(freq, start);
+                    gain.gain.setValueAtTime(0.09, start);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(start);
+                    osc.stop(start + 0.36);
+                });
+            } catch (e) {}
+        }
+
+        soundToggle.addEventListener("click", () => {
+            soundEnabled = !soundEnabled;
+            soundIconOn.style.display = soundEnabled ? "block" : "none";
+            soundIconOff.style.display = soundEnabled ? "none" : "block";
+        });
+
+        // ==========================================
+        // 4. RENDERIZAÇÃO NÍTIDA (HiDPI / RETINA)
+        // ==========================================
+        function setupCanvasResolution() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 3);
+            const rect = wheelCanvas.getBoundingClientRect();
+            const size = Math.max(rect.width, 320);
+            wheelCanvas.width = size * dpr;
+            wheelCanvas.height = size * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            drawWheel();
+        }
 
         function drawWheel() {
-            const numItems = items.length;
-            const arcSize = (2 * Math.PI) / numItems;
-            const center = canvas.width / 2;
-            const radius = center - 10;
+            const dpr = Math.min(window.devicePixelRatio || 1, 3);
+            const size = wheelCanvas.width / dpr;
+            const center = size / 2;
+            const radius = center - 4;
+            const count = wheelItems.length;
+            if (!count) return;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const arc = (2 * Math.PI) / count;
+            ctx.clearRect(0, 0, size, size);
 
-            for (let i = 0; i < numItems; i++) {
-                const angle = currentAngle + i * arcSize;
+            for (let i = 0; i < count; i++) {
+                const startAngle = currentAngle + i * arc;
+                const endAngle = startAngle + arc;
 
-                // Desenhar fatia
+                // Fatia
                 ctx.beginPath();
-                ctx.fillStyle = colors[i] || fallbackColors[i % fallbackColors.length];
                 ctx.moveTo(center, center);
-                ctx.arc(center, center, radius, angle, angle + arcSize);
-                ctx.lineTo(center, center);
+                ctx.arc(center, center, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = wheelColors[i % wheelColors.length];
                 ctx.fill();
 
-                // Borda da fatia
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = "#1a1a24";
+                // Divisória nítida
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
                 ctx.stroke();
 
-                // Desenhar texto
+                // Pino metálico na borda de cada fatia
+                const pinX = center + Math.cos(startAngle) * (radius - 9);
+                const pinY = center + Math.sin(startAngle) * (radius - 9);
+                ctx.beginPath();
+                ctx.arc(pinX, pinY, 2.5, 0, 2 * Math.PI);
+                ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+                ctx.fill();
+
+                // Texto radial
                 ctx.save();
                 ctx.translate(center, center);
-                ctx.rotate(angle + arcSize / 2);
+                ctx.rotate(startAngle + arc / 2);
                 ctx.textAlign = "right";
-                ctx.fillStyle = "#ffffff";
-                ctx.font = numItems > 10 ? "bold 11px sans-serif" : "bold 13px sans-serif";
-                
-                // Limitar tamanho do texto para caber na fatia
-                let displayText = items[i];
-                if (displayText.length > 22) {
-                    displayText = displayText.substring(0, 20) + "...";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#f9fafb";
+
+                const fontSize = count > 14 ? 11.5 : count > 8 ? 13 : 14.5;
+                ctx.font = `600 ${fontSize}px Inter, sans-serif`;
+
+                let label = wheelItems[i];
+                const maxLen = count > 14 ? 21 : 25;
+                if (label.length > maxLen) {
+                    label = label.slice(0, maxLen - 1).trim() + "…";
                 }
 
-                ctx.fillText(displayText, radius - 20, 5);
+                ctx.fillText(label, radius - 22, 0);
                 ctx.restore();
             }
 
-            // Círculo central da roleta
+            // Sombra interna sutil na borda
+            const innerShadow = ctx.createRadialGradient(center, center, radius * 0.82, center, center, radius);
+            innerShadow.addColorStop(0, "rgba(0,0,0,0)");
+            innerShadow.addColorStop(1, "rgba(0,0,0,0.35)");
             ctx.beginPath();
-            ctx.arc(center, center, 35, 0, 2 * Math.PI);
-            ctx.fillStyle = "#111116";
+            ctx.arc(center, center, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = innerShadow;
             ctx.fill();
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = "#ffd700";
-            ctx.stroke();
+        }
+
+        // ==========================================
+        // 5. LÓGICA DO GIRO E CÁLCULO PRECISO DO TOPO
+        // ==========================================
+        function getWinningIndexAtTop(angle, count) {
+            const arc = (2 * Math.PI) / count;
+            // O ponteiro fica exatamente no topo: 270 graus = 3 * Math.PI / 2
+            const pointerAngle = (3 * Math.PI) / 2;
+            const relativeAngle = ((pointerAngle - angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+            return Math.floor(relativeAngle / arc) % count;
         }
 
         function spinWheel() {
             if (isSpinning) return;
             isSpinning = true;
             spinBtn.disabled = true;
-            resultCard.style.display = "none";
+            backBtn.disabled = true;
+            hubBtn.disabled = true;
 
-            const numItems = items.length;
-            const arcSize = (2 * Math.PI) / numItems;
-            
-            // Giro randômico forte (entre 5 e 8 voltas completas + deslocamento aleatório)
-            const minSpins = 5;
-            const maxSpins = 8;
-            const randomSpins = Math.floor(Math.random() * (maxSpins - minSpins + 1)) + minSpins;
-            const extraAngle = Math.random() * (2 * Math.PI);
-            const totalRotation = (randomSpins * 2 * Math.PI) + extraAngle;
+            const count = wheelItems.length;
+            const extraSpins = 5 + Math.floor(Math.random() * 4); // 5 a 8 voltas
+            const randomOffset = Math.random() * 2 * Math.PI;
+            const totalRotation = extraSpins * 2 * Math.PI + randomOffset;
 
             const startAngle = currentAngle;
+            const duration = 3800;
             const startTime = performance.now();
-            const duration = 4000; // 4 segundos de animação
+            let lastTickIndex = getWinningIndexAtTop(startAngle, count);
 
-            let lastIndexChecked = -1;
-
-            function animateSpin(currentTime) {
-                const elapsed = currentTime - startTime;
+            function animate(now) {
+                const elapsed = now - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                
-                // Efeito de desaceleração suave (Ease Out Quartic/Cubic)
-                const easeOut = 1 - Math.pow(1 - progress, 4);
+                // Desaceleração natural (Ease Out Quintic)
+                const ease = 1 - Math.pow(1 - progress, 5);
 
-                currentAngle = startAngle + (totalRotation * easeOut);
+                currentAngle = startAngle + totalRotation * ease;
                 drawWheel();
 
-                // Efeito visual do ponteiro batendo nos pinos
-                const normalizedAngle = (2 * Math.PI - (currentAngle % (2 * Math.PI))) % (2 * Math.PI);
-                const winningIndex = Math.floor(normalizedAngle / arcSize) % numItems;
-                if (winningIndex !== lastIndexChecked) {
+                const currentIndex = getWinningIndexAtTop(currentAngle, count);
+                if (currentIndex !== lastTickIndex) {
                     pointer.classList.add("tick");
-                    setTimeout(() => pointer.classList.remove("tick"), 80);
-                    lastIndexChecked = winningIndex;
+                    playTickSound();
+                    setTimeout(() => pointer.classList.remove("tick"), 65);
+                    lastTickIndex = currentIndex;
                 }
 
                 if (progress < 1) {
-                    requestAnimationFrame(animateSpin);
+                    requestAnimationFrame(animate);
                 } else {
                     isSpinning = false;
                     spinBtn.disabled = false;
-                    handleSpinResult(winningIndex);
+                    backBtn.disabled = false;
+                    hubBtn.disabled = false;
+                    onSpinComplete(currentIndex);
                 }
             }
 
-            requestAnimationFrame(animateSpin);
+            requestAnimationFrame(animate);
         }
 
-        function handleSpinResult(winningIndex) {
-            const winner = items[winningIndex];
+        function onSpinComplete(winnerIndex) {
+            const cat = catalogData[activeCategory];
+            const winnerName = wheelItems[winnerIndex];
 
-            if (currentMode === "directors") {
-                selectedDirector = directorsData.find(d => d.nome === winner);
-                
-                // Configurar roleta para os filmes deste diretor
-                items = selectedDirector.filmes;
-                colors = items.map((_, i) => i % 2 === 0 ? "#b20710" : "#1a1a24");
+            if (currentStep === 1) {
+                // Avança para Etapa 2
+                selectedGroup = cat.groups.find(g => g.nome === winnerName);
+                currentStep = 2;
+                wheelItems = [...selectedGroup.itens];
+                wheelColors = cat.palette;
                 currentAngle = 0;
-                currentMode = "movies";
 
-                stepIndicator.innerText = `Etapa 2: Sorteando Filme de ${selectedDirector.nome}`;
-                spinBtn.innerText = "GIRAR FILME";
+                stepLabel.textContent = "Etapa 2 de 2";
+                stepDesc.textContent = `Sortear ${cat.step2Noun}`;
+                spinBtn.textContent = `Girar ${cat.step2Noun}`;
+                backBtn.textContent = `Trocar ${cat.step1Noun}`;
                 backBtn.style.display = "inline-block";
 
-                drawWheel();
+                interLabel.textContent = `${cat.step1Noun} selecionado`;
+                interValue.textContent = selectedGroup.nome;
+                interBanner.style.display = "block";
 
-                resultTitle.innerText = `Diretor Escolhido: ${selectedDirector.nome}!`;
-                resultDesc.innerText = `Agora clique em 'GIRAR FILME' para sortear qual obra-prima dele você vai assistir hoje.`;
-                resultCard.style.display = "block";
+                drawWheel();
             } else {
-                // Resultado final do filme
-                resultTitle.innerText = `🎬 Filme Sorteado!`;
-                resultDesc.innerText = `Prepare a pipoca: ${winner}\nDiretor: ${selectedDirector.nome}`;
-                resultCard.style.display = "block";
-                spinBtn.innerText = "GIRAR NOVAMENTE";
+                // Resultado Final
+                playWinSound();
+                launchConfetti();
+                addHistoryEntry(winnerName, selectedGroup.nome, cat.label);
+
+                modalCategoryTag.textContent = cat.badgeTag;
+                modalTitle.textContent = winnerName;
+                modalCreator.textContent = `${cat.creatorPrefix} ${selectedGroup.nome}`;
+                modalSpinSameBtn.textContent = `Girar outro ${cat.step2Noun.toLowerCase()} de ${selectedGroup.nome}`;
+                modalResetBtn.textContent = `Novo ${cat.step1Noun.split(" ")[0]}`;
+                modalBackdrop.classList.add("open");
             }
         }
 
-        function resetToDirectors() {
-            currentMode = "directors";
-            selectedDirector = null;
-            items = directorsData.map(d => d.nome);
-            colors = directorsData.map(d => d.cor);
+        function resetCategoryState(categoryKey) {
+            activeCategory = categoryKey;
+            document.body.setAttribute("data-theme", categoryKey);
+
+            tabButtons.forEach(btn => {
+                const isSelected = btn.dataset.category === categoryKey;
+                btn.classList.toggle("active", isSelected);
+                btn.setAttribute("aria-selected", isSelected ? "true" : "false");
+            });
+
+            const cat = catalogData[categoryKey];
+            currentStep = 1;
+            selectedGroup = null;
+            wheelItems = cat.groups.map(g => g.nome);
+            wheelColors = cat.palette;
             currentAngle = 0;
 
-            stepIndicator.innerText = "Etapa 1: Girar o Diretor";
-            spinBtn.innerText = "GIRAR ROLETA";
+            stepLabel.textContent = "Etapa 1 de 2";
+            stepDesc.textContent = `Sortear ${cat.step1Noun}`;
+            spinBtn.textContent = `Girar ${cat.step1Noun}`;
             backBtn.style.display = "none";
-            resultCard.style.display = "none";
+            interBanner.style.display = "none";
+
             drawWheel();
         }
 
-        // Inicializar roleta ao carregar a página
-        window.onload = () => {
-            drawWheel();
-        };
+        // ==========================================
+        // 6. HISTÓRICO PERSISTENTE
+        // ==========================================
+        function addHistoryEntry(title, creator, categoryLabel) {
+            spinHistory.unshift({ title, creator, categoryLabel });
+            if (spinHistory.length > 8) spinHistory.pop();
+            try {
+                localStorage.setItem("roleta_curada_history", JSON.stringify(spinHistory));
+            } catch (e) {}
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (!spinHistory.length) {
+                historySection.style.display = "none";
+                return;
+            }
+            historySection.style.display = "block";
+            historyList.innerHTML = spinHistory.map(item => `
+                <div class="history-item">
+                    <div>
+                        <div class="title">${item.title}</div>
+                        <div class="meta">${item.creator}</div>
+                    </div>
+                    <span class="history-pill">${item.categoryLabel}</span>
+                </div>
+            `).join("");
+        }
+
+        clearHistoryBtn.addEventListener("click", () => {
+            spinHistory = [];
+            try {
+                localStorage.removeItem("roleta_curada_history");
+            } catch (e) {}
+            renderHistory();
+        });
+
+        // ==========================================
+        // 7. SISTEMA DE CONFETES (CANVAS)
+        // ==========================================
+        const confettiCanvas = document.getElementById("confettiCanvas");
+        const cCtx = confettiCanvas.getContext("2d");
+        let confettiParticles = [];
+        let confettiAnimId = null;
+
+        function resizeConfetti() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resizeConfetti);
+        resizeConfetti();
+
+        function launchConfetti() {
+            const colorsByTheme = {
+                filmes: ["#e50914", "#fbbf24", "#ffffff", "#f87171", "#991b1b"],
+                series: ["#0ea5e9", "#38bdf8", "#fbbf24", "#ffffff", "#0284c7"],
+                animes: ["#f97316", "#fb923c", "#fde047", "#ffffff", "#ea580c"]
+            };
+            const palette = colorsByTheme[activeCategory];
+
+            confettiParticles = [];
+            const total = 150;
+            for (let i = 0; i < total; i++) {
+                const fromLeft = i % 2 === 0;
+                const startX = fromLeft ? confettiCanvas.width * 0.2 : confettiCanvas.width * 0.8;
+                const startY = confettiCanvas.height * 0.55;
+                const angle = fromLeft
+                    ? -Math.PI / 3 + (Math.random() - 0.5) * 0.8
+                    : (-2 * Math.PI) / 3 + (Math.random() - 0.5) * 0.8;
+                const speed = 9 + Math.random() * 11;
+
+                confettiParticles.push({
+                    x: startX,
+                    y: startY,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 3,
+                    w: 6 + Math.random() * 6,
+                    h: 4 + Math.random() * 5,
+                    color: palette[Math.floor(Math.random() * palette.length)],
+                    rotation: Math.random() * 360,
+                    rotSpeed: (Math.random() - 0.5) * 14,
+                    gravity: 0.34,
+                    drag: 0.985,
+                    opacity: 1
+                });
+            }
+
+            if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+            updateConfetti();
+        }
+
+        function updateConfetti() {
+            cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+            confettiParticles.forEach(p => {
+                p.vx *= p.drag;
+                p.vy = p.vy * p.drag + p.gravity;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.rotation += p.rotSpeed;
+
+                if (p.y > confettiCanvas.height * 0.82) {
+                    p.opacity -= 0.025;
+                }
+
+                if (p.opacity > 0) {
+                    cCtx.save();
+                    cCtx.globalAlpha = Math.max(p.opacity, 0);
+                    cCtx.translate(p.x, p.y);
+                    cCtx.rotate((p.rotation * Math.PI) / 180);
+                    cCtx.fillStyle = p.color;
+                    cCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    cCtx.restore();
+                }
+            });
+
+            confettiParticles = confettiParticles.filter(p => p.opacity > 0 && p.y < confettiCanvas.height + 30);
+
+            if (confettiParticles.length > 0) {
+                confettiAnimId = requestAnimationFrame(updateConfetti);
+            } else {
+                cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            }
+        }
+
+        // ==========================================
+        // 8. EVENTOS E ATALHOS
+        // ==========================================
+        tabButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                if (isSpinning) return;
+                resetCategoryState(btn.dataset.category);
+            });
+        });
+
+        spinBtn.addEventListener("click", spinWheel);
+        hubBtn.addEventListener("click", spinWheel);
+        wheelCanvas.addEventListener("click", spinWheel);
+
+        backBtn.addEventListener("click", () => {
+            if (isSpinning) return;
+            resetCategoryState(activeCategory);
+        });
+
+        modalCloseBtn.addEventListener("click", () => {
+            modalBackdrop.classList.remove("open");
+        });
+
+        modalBackdrop.addEventListener("click", (e) => {
+            if (e.target === modalBackdrop) modalBackdrop.classList.remove("open");
+        });
+
+        modalSpinSameBtn.addEventListener("click", () => {
+            modalBackdrop.classList.remove("open");
+            spinWheel();
+        });
+
+        modalResetBtn.addEventListener("click", () => {
+            modalBackdrop.classList.remove("open");
+            resetCategoryState(activeCategory);
+        });
+
+        // Atalho de teclado: Espaço gira a roleta / Esc fecha modal
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Escape" && modalBackdrop.classList.contains("open")) {
+                modalBackdrop.classList.remove("open");
+                return;
+            }
+            if (e.code === "Space" && document.activeElement.tagName !== "BUTTON") {
+                e.preventDefault();
+                if (modalBackdrop.classList.contains("open")) {
+                    modalBackdrop.classList.remove("open");
+                }
+                spinWheel();
+            }
+        });
+
+        window.addEventListener("resize", setupCanvasResolution);
+
+        // Inicialização
+        resetCategoryState("filmes");
+        setupCanvasResolution();
+        renderHistory();
     </script>
 </body>
 </html>
